@@ -43,6 +43,19 @@ for (const p of ['lib/index.js', 'bin/dsh-hole.js', 'cordis.patch.yml']) {
   if (!fs.existsSync(path.join(root, p))) errs.push('缺少文件: ' + p);
 }
 
+
+// frontmatter 必须能被 YAML 解析（历史上因未加引号 ": " 导致技能从 catalog 消失）
+try {
+  const yamlPath = path.join(process.env.DSH_HOME || path.join(process.env.USERPROFILE || '', '.dsh'), 'profiles', 'desktop', 'node_modules', 'js-yaml', 'index.js');
+  const yaml = (await import('file://' + yamlPath.replace(/\\/g, '/'))).default;
+  const raw = fs.readFileSync(skill, 'utf8');
+  const fmRaw = /^---\n([\s\S]*?)\n---/.exec(raw);
+  if (fmRaw) { yaml.load(fmRaw[1]); console.log('  frontmatter YAML: OK'); }
+} catch (e) {
+  if (String(e && e.message).includes('Cannot find')) console.log('  frontmatter YAML: skip (js-yaml 不可用)');
+  else errs.push('frontmatter YAML 解析失败: ' + (e && e.message));
+}
+
 console.log((errs.length ? '[FAIL] ' : '[PASS] ') + pkg.name + '@' + pkg.version);
 if (pkg.dsh?.bundle?.patch) console.log('  bundle.patch: ' + pkg.dsh.bundle.patch);
 errs.forEach(e => console.log('  ERROR ' + e));
