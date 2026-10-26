@@ -1,50 +1,35 @@
-# 使用手册
+# 使用手册（三层流程）
 
-## 一次完整作业的推进顺序
-
-### 0. 门禁（跳过这步的作业一律作废）
-
-读 `references/00-law-and-scope.md`，逐条确认：目标在授权范围内、禁止项清楚、时间窗明确、数据处置有约定。任一条不满足就停。
-
-### 1. 侦察
+## 0. 防御层（强制）
 
 ```bash
-nslookup TARGET
-curl -s "https://crt.sh/?q=%25.TARGET&output=json" -o crt.json
-node scripts/probe.mjs hosts.txt hosts.json
-node scripts/jsendpoints.mjs https://HOST /
+cd skills/hole/layers/guard
+node target.mjs init
+# 编辑 target.json 三个必填项：
+#   authorization.reference  项目页 URL / 授权书编号 / 靶场说明
+#   target.host              主目标
+#   target.scope             授权范围（数组）
+node target.mjs check     # 必须 PASS
+node target.mjs env       # 导出 TARGET / TARGET_HOST / RATE / SCOPE / EVIDENCE_DIR
 ```
 
-产出 `hosts.json`，按「登录页 > 上传页 > API > 静态站」排序，后面按这个顺序打。
+`check` 硬拒：无授权来源、scope 空、host 越界、命中 out_of_scope、allow_dos、max_rps>5。
 
-### 2. 检测（先打不需要账号的）
+## 1. 破甲层（可选）
 
-顺序：遗留文件/配置暴露 → 认证缺陷 → 注入 → 文件/SSRF/业务逻辑 → 基础设施 → 框架专项。逐项对照 `references/02-web-checklists.md` 的判据与误报陷阱。
+```bash
+cd ../break
+node adapter.mjs build --profile cn-model --task pentest --out prompt.md
+node adapter.mjs inspect --file prompt.md
+node adapter.mjs log --profile cn-model --task pentest --refusal 0 --note 首轮通过
+```
 
-### 3. 拿到账号后（越权是价值高地）
+四层装配：L0 身份 → L1 任务框架（陈述授权事实）→ L2 工具纪律 → L3 输出契约。门禁不过时 `build` 退出码 2。
 
-优先打：订单/合同/发票详情、导出接口、打印/PDF 渲染、会员资料、审批流。**读到 1 条即停**，证明即可。
+## 2. 挖掘层
 
-### 4. 报告
+按 `layers/hunt/README.md`：先侦察（probe/jsendpoints），再按「遗留文件 → 认证 → 越权 → 注入 → 文件/SSRF/业务 → 基础设施 → 框架专项」推进。命令用 `{{TARGET}}` 占位。
 
-用 `references/05-report-template.md`。三条硬约束：第 8 项不写 URL；截图两张（复现 + 归属证明）；PoC 只证明存在。
+## 3. 报告
 
-## 脚本速查
-
-| 脚本 | 用途 | 关键参数 |
-|---|---|---|
-| `probe.mjs` | 主机存活 + 标题指纹 | `hosts.txt out.json [并发]` |
-| `jsendpoints.mjs` | 提取接口/密钥/sourcemap | `https://HOST [页面路径]` |
-| `sqli-time.mjs` | 时间盲注存在性 | `"URL" [延时秒] [轮次]` |
-| `bypass403.mjs` | 403 绕过矩阵 | `https://HOST /路径` |
-| `captcha-montage.ps1` | 批量取码拼图 | `-Count 12 -Out cap12.png` |
-
-## 与 dsh-purge 组合时的用法
-
-装好 dsh-purge 并启用其演练台后，可在同一会话里：
-
-- 用演练台的事实库记录资产、漏洞与状态；
-- 用红队角色分工（侦察/利用/报告）并行推进；
-- 技能本身不依赖演练台，单独使用不受影响。
-
-> 组合部署时注意：dsh-purge 会改写系统提示词与工具行为，若出现异常，先禁用其条目回归干净状态再排查。
+`references/report-template.md`：第 8 项不写 URL/IP/路径；截图两张（复现 + 归属证明）；PoC 只证明存在。

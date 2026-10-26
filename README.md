@@ -9,23 +9,38 @@
 
 ---
 
-## 这是什么
+## 三层架构
 
-一个 DSH 插件 + 技能包。装上之后，DSH 里多出一个叫 `hole` 的技能，包含：
+技能内部按**执行顺序**分三层，上一层不过，下一层拒绝执行：
 
-| 模块 | 内容 |
-|---|---|
-| `references/00-law-and-scope.md` | 法律红线（刑法 285/286/253 条对应行为）、授权核验清单、数据最小化五原则 |
-| `references/01-recon.md` | 证书透明度枚举、指纹判读、路径字典、JS 挖接口与 sourcemap |
-| `references/02-web-checklists.md` | 八大攻击面检测清单，每组「探针 → 判据 → 误报陷阱 → 修复方向」 |
-| `references/03-framework-fingerprints.md` | ThinkPHP/Laravel/CI/Spring/Shiro/UEditor 等指纹与检测点 |
-| `references/04-captcha-and-auth-bypass.md` | 验证码对抗、报错反推服务端逻辑、JWT/会话/参数污染 |
-| `references/05-report-template.md` | 国内 SRC 通用 14 项报告模板 + 提交前自检 |
-| `scripts/probe.mjs` | 主机存活与指纹批量探测 |
-| `scripts/jsendpoints.mjs` | 页面/JS 提取接口、密钥特征、sourcemap 检测 |
-| `scripts/sqli-time.mjs` | 时间盲注存在性验证（只读、低频） |
-| `scripts/bypass403.mjs` | 403 绕过 header 与路径矩阵 |
-| `scripts/captcha-montage.ps1` | 批量取码拼图，一次识别 |
+```
+layers/guard  防御层   law-cn.md（中国法律判定）+ target.mjs（目标槽位 = tool 入参）
+      │  check 不通过 → 全线停止
+      ▼
+layers/break  破甲层   compose.md（四层提示词协议）+ profiles.yml（模型档位）+ adapter.mjs（装配器）
+      │  仅授权红队演练 / 模型安全评测 / 自建靶场
+      ▼
+layers/hunt   挖掘层   侦察 + 八大攻击面清单 + 框架指纹 + 验证码对抗 + 报告模板
+```
+
+| 层 | 文件 | 作用 |
+|---|---|---|
+| **guard** | `law-cn.md` | 刑法 285/286/253 条对应行为、授权核验清单、数据最小化、停手触发器 |
+| | `target.mjs` | **目标槽位工具**：agent 填 `authorization.reference` / `target.host` / `target.scope`，`check` 硬拒越界与无授权，`env` 导出 `{{TARGET}}` 等占位符 |
+| | `target-schema.json` | 槽位字段定义（等价于 tool 的入参 schema） |
+| **break** | `compose.md` | L0 身份 → L1 任务框架 → L2 工具纪律 → L3 输出契约；模型适配矩阵；拒答检测与重试 |
+| | `profiles.yml` | generic / cn-model / en-model 三档 + 任务类型 |
+| | `adapter.mjs` | 装配器：自动挂载 dsh-purge 提示词资产，产出 prompt.md + JSONL 评测记录 |
+| **hunt** | `references/01-recon.md` | 证书透明度枚举、指纹判读、路径字典、JS 挖接口与 sourcemap |
+| | `references/02-web-checklists.md` | 八大攻击面检测清单（探针 → 判据 → 误报陷阱 → 修复方向） |
+| | `references/03-framework-fingerprints.md` | ThinkPHP/Laravel/CI/Spring/Shiro/UEditor 等 |
+| | `references/04-captcha-and-auth-bypass.md` | 验证码流水线、报错反推、JWT/会话/参数污染 |
+| | `references/report-template.md` | 14 项报告模板 + 提交前自检 |
+| | `scripts/*.mjs` `*.ps1` | probe / jsendpoints / sqli-time / bypass403 / captcha-montage |
+
+### 门禁规则（target.mjs check 硬拒）
+
+未声明授权来源 · scope 为空 · host 不在 scope 内 · 命中 out_of_scope · `allow_dos=true` · `max_rps>5` —— 任意一条命中即退出码 1，且 `env`/`render` 拒绝输出，破甲层 `build` 退出码 2。
 
 ## 安装
 

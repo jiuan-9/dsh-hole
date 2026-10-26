@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "hole target slot",
+  "description": "由 agent 填写的目标槽位；相当于本技能的『tool 参数』。check 通过后挖掘层才会给出可执行命令。",
+  "type": "object",
+  "required": [
+    "authorization",
+    "target",
+    "rules"
+  ],
+  "properties": {
+    "authorization": {
+      "type": "object",
+      "required": [
+        "type",
+        "reference"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "platform_scope",
+            "written_auth",
+            "own_lab"
+          ],
+          "description": "platform_scope=平台项目页列出的资产；written_auth=书面授权；own_lab=自有靶场"
+        },
+        "reference": {
+          "type": "string",
+          "description": "项目页 URL / 授权书编号 / 靶场说明，不可为空"
+        },
+        "expires": {
+          "type": "string",
+          "description": "授权到期日 YYYY-MM-DD（own_lab 可空）"
+        },
+        "contact": {
+          "type": "string",
+          "description": "厂商或平台紧急联系人（出事第一通知对象）"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "host",
+        "scope"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "主目标主机名或 IP"
+        },
+        "scheme": {
+          "enum": [
+            "https",
+            "http"
+          ],
+          "default": "https"
+        },
+        "ips": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "授权范围（域名/通配/IP 段），check 会校验 host 是否落在范围内"
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "明确排除的资产（如第三方 SaaS、支付网关）"
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "properties": {
+        "max_rps": {
+          "type": "number",
+          "default": 2,
+          "description": "每秒最大请求数，硬上限 5"
+        },
+        "allow_bruteforce": {
+          "type": "boolean",
+          "default": false
+        },
+        "allow_social": {
+          "type": "boolean",
+          "default": false
+        },
+        "allow_dos": {
+          "type": "boolean",
+          "const": false,
+          "description": "恒为 false，check 会硬拒"
+        },
+        "data_minimization": {
+          "type": "boolean",
+          "default": true
+        },
+        "stop_on_prod_impact": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "dir": {
+          "type": "string",
+          "default": "./evidence"
+        },
+        "screenshot_time": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "description": "补天 / 漏洞盒子 / CNVD / 自建渠道"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "industry": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
