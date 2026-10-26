@@ -1,0 +1,66 @@
+{
+  "name": "dsh-hole",
+  "version": "1.0.0",
+  "description": "DSH 授权渗透技能包 + 插件封装：法律边界门禁、侦察、八大攻击面检测清单、框架指纹、验证码对抗、可执行探测脚本与 14 项中文 SRC 报告模板。可选与 dsh-purge 组合使用。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./install": "./lib/install.js",
+    "./skill": "./skills/hole/SKILL.md",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-hole": "bin/dsh-hole.js"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "skills",
+    "docs",
+    "presets",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "postinstall": "node bin/dsh-hole.js install --quiet"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-plugins",
+    "skill",
+    "skills",
+    "pentest",
+    "security",
+    "red-team",
+    "web-security",
+    "渗透测试",
+    "漏洞报告"
+  ],
+  "peerDependencies": {
+    "dsh-purge": ">=1.1.0"
+  },
+  "peerDependenciesMeta": {
+    "dsh-purge": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jiuan-9/dsh-hole.git"
+  },
+  "homepage": "https://github.com/jiuan-9/dsh-hole#readme",
+  "bugs": {
+    "url": "https://github.com/jiuan-9/dsh-hole/issues"
+  }
+}

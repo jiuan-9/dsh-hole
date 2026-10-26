@@ -1,0 +1,16 @@
+# 可选预设：把 hole 技能与 dsh-purge 演练台组合成一套「红队评测」工作流。
+# 仅在你已安装 dsh-purge 时启用；未安装时删除本文件不影响主技能使用。
+id: hole
+name: hole
+description: 授权渗透工作流 — 法律门禁 → 侦察 → 八面检测 → 报告。与 dsh-purge 演练台组合时，可在同一会话里做事实库记录与角色分工。
+version: 1.0.0
+
+skills:
+  - id: hole
+    path: ../skills/hole
+    description: Authorized web pentest playbook with legality gate, recon, checklists, captcha/auth bypass and a 14-field report template.
+
+# 需要演练台时再加（需已安装 dsh-purge）：
+# plugins:
+#   - name: dsh-purge
+#   - name: dsh-purge/redteam

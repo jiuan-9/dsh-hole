@@ -1,0 +1,11 @@
+node_modules/
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+*.local
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+_smoke/

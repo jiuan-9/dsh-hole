@@ -1,0 +1,15 @@
+dsh-hole
+Copyright 2026 jiuan-9
+
+本产品包含由独立作者原创的技能内容（skills/hole/references、skills/hole/scripts）。
+
+插件脚手架约定（$DSH_HOME/skills/<id>/SKILL.md 目录布局、cordis.patch.yml 的 insert 声明形式、
+启动期不抛错的 apply 约定）参考了以下 Apache-2.0 项目：
+  dsh-purge — https://github.com/YuJunZhiXue/dsh-purge
+
+本仓库不分发 dsh-purge 的任何源代码文件；dsh-purge 仅作为可选 peer 依赖在文档中引用。
+若需在组合部署中分发 dsh-purge，请一并保留其 LICENSE 与 NOTICE。
+
+This product does not bundle source files from dsh-purge. dsh-purge is referenced
+only as an optional peer dependency. If you redistribute it alongside this package,
+retain its LICENSE and NOTICE files.
