@@ -1,6 +1,6 @@
 {
   "name": "dsh-hole",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DSH 授权渗透技能包 + 插件封装：法律边界门禁、侦察、八大攻击面检测清单、框架指纹、验证码对抗、可执行探测脚本与 14 项中文 SRC 报告模板。可选与 dsh-purge 组合使用。",
   "type": "module",
   "main": "lib/index.js",
