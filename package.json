@@ -1,6 +1,6 @@
 {
   "name": "dsh-hole",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "DSH 授权渗透技能包 + 插件封装：法律边界门禁、侦察、八大攻击面检测清单、框架指纹、验证码对抗、可执行探测脚本与 14 项中文 SRC 报告模板。可选与 dsh-purge 组合使用。",
   "type": "module",
   "main": "lib/index.js",
@@ -28,7 +28,9 @@
     "NOTICE"
   ],
   "scripts": {
-    "postinstall": "node bin/dsh-hole.js install --quiet"
+    "postinstall": "node bin/dsh-hole.js install --quiet",
+    "selftest": "node scripts/selftest.mjs",
+    "verify": "node scripts/verify-manifest.mjs"
   },
   "license": "Apache-2.0",
   "keywords": [
@@ -73,8 +75,8 @@
     },
     "install": {
       "preferred": "tarball",
-      "tarball": "https://github.com/jiuan-9/dsh-hole/archive/refs/tags/v1.2.0.tar.gz",
-      "zip": "https://github.com/jiuan-9/dsh-hole/archive/refs/tags/v1.2.0.zip",
+      "tarball": "https://github.com/jiuan-9/dsh-hole/archive/refs/tags/v1.2.1.tar.gz",
+      "zip": "https://github.com/jiuan-9/dsh-hole/archive/refs/tags/v1.2.1.zip",
       "git": "https://github.com/jiuan-9/dsh-hole.git"
     }
   }

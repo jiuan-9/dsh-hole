@@ -21,16 +21,17 @@ const FILE = process.env.HOLE_TARGET || 'target.json';
 
 const TEMPLATE = {
   authorization: {
+    // 空值：未填写时 check 必须失败，避免"模板预填即通过"
     type: 'platform_scope',
-    reference: 'https://www.butian.net/... 或在授权书编号',
+    reference: '',
     expires: '',
     contact: '',
   },
   target: {
-    host: 'example.com',
+    host: '',
     scheme: 'https',
     ips: [],
-    scope: ['example.com'],
+    scope: [],
     out_of_scope: [],
   },
   rules: {
