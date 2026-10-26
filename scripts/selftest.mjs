@@ -113,18 +113,92 @@ run("恢复合法 host", process.execPath, [path.join(GUARD, "target.mjs"), "set
 
 // ── 5. hunt 脚本（外部只用 example.com）
 section("5. hunt 脚本（目标 example.com）");
+// 所有 hunt 测试统一打到本地靶，摆脱外网抖动
+const PORT = 18080 + Math.floor(Math.random() * 200);
+const srvFile = path.join(TMP, "lab.mjs");
+fs.writeFileSync(srvFile, [
+  "import http from 'node:http';",
+  "const PORT = Number(process.argv[2]);",
+  "http.createServer((req, res) => {",
+  "  const u = new URL(req.url, 'http://x');",
+  "  const raw = decodeURIComponent(req.url);",
+  "  const d = (u.pathname === '/vuln' && /SLEEP\\(/i.test(raw)) ? 2500 : 0;",
+  "  setTimeout(() => { res.writeHead(200, {'content-type':'text/html'}); res.end('<html><title>lab target</title>ok</html>'); }, d);",
+  "}).listen(PORT, '127.0.0.1', () => console.log('READY ' + PORT));",
+].join("\n"));
+
+const { spawn } = await import("node:child_process");
+const srv = spawn(process.execPath, [srvFile, String(PORT)], { stdio: "ignore" });
+
+// 轮询等待服务就绪（最多 6 秒），比固定 sleep 可靠
+let ready = false;
+for (let i = 0; i < 30; i++) {
+  const ping = spawnSync(process.execPath, ["-e", "fetch('http://127.0.0.1:" + PORT + "/ping').then(()=>process.exit(0)).catch(()=>process.exit(1))"], { timeout: 5000 });
+  if (ping.status === 0) { ready = true; break; }
+  spawnSync(process.execPath, ["-e", "setTimeout(()=>{},200)"], { timeout: 3000 });
+}
+results.push({ label: "本地靶就绪 (端口 " + PORT + ")", ok: ready });
+console.log((ready ? "  PASS  " : "  FAIL  ") + "本地靶就绪（端口 " + PORT + "）");
+
 const hostsFile = path.join(TMP, "hosts.txt");
-fs.writeFileSync(hostsFile, "example.com\n");
+fs.writeFileSync(hostsFile, "127.0.0.1:" + PORT + "\n");
 const probeOut = run("probe.mjs 存活探测", process.execPath, [path.join(HUNT, "scripts", "probe.mjs"), hostsFile, path.join(TMP, "hosts.json")], { timeout: 60000 });
-const probeOk = /example\.com \| 200/.test(probeOut.out);
+const probeOk = /127\.0\.0\.1:\d+ \| 200/.test(probeOut.out);
 results.push({ label: "probe 返回 200 + 标题", ok: probeOk });
 console.log((probeOk ? "  PASS  " : "  FAIL  ") + "probe 返回 200 + 标题  →  " + (probeOut.out.split(/\r?\n/)[0] || "").slice(0, 80));
-run("jsendpoints.mjs 提取接口", process.execPath, [path.join(HUNT, "scripts", "jsendpoints.mjs"), "https://example.com", "/"], { timeout: 60000 });
-const sqliOut = run("sqli-time.mjs 无注入基线", process.execPath, [path.join(HUNT, "scripts", "sqli-time.mjs"), "https://example.com/?id=1", "2", "1"], { timeout: 90000 });
-const sqliOk = /no time-based signal/.test(sqliOut.out);
-results.push({ label: "sqli-time 正确判定无信号", ok: sqliOk });
-console.log((sqliOk ? "  PASS  " : "  FAIL  ") + "sqli-time 正确判定无信号（误报检测）");
-run("bypass403.mjs 矩阵可运行", process.execPath, [path.join(HUNT, "scripts", "bypass403.mjs"), "https://example.com", "/admin"], { timeout: 60000 });
+
+const jsOut = run("jsendpoints.mjs 提取接口", process.execPath, [path.join(HUNT, "scripts", "jsendpoints.mjs"), "http://127.0.0.1:" + PORT, "/"], { timeout: 60000 });
+const vulnRun = run("sqli-time 命中本地脆弱靶", process.execPath, [path.join(HUNT, "scripts", "sqli-time.mjs"), "http://127.0.0.1:" + PORT + "/vuln?id=1", "2", "2"], { timeout: 90000 });
+const vulnOk = /time-based signal detected/.test(vulnRun.out);
+results.push({ label: "sqli-time 命中脆弱靶（真阳性）", ok: vulnOk });
+console.log((vulnOk ? "  PASS  " : "  FAIL  ") + "sqli-time 命中本地脆弱靶（真阳性）");
+
+const cleanRun = run("sqli-time 干净端点不误报", process.execPath, [path.join(HUNT, "scripts", "sqli-time.mjs"), "http://127.0.0.1:" + PORT + "/clean?id=1", "2", "2"], { timeout: 90000 });
+const cleanOk = /no time-based signal/.test(cleanRun.out);
+results.push({ label: "sqli-time 干净端点不误报（假阳性检测）", ok: cleanOk });
+console.log((cleanOk ? "  PASS  " : "  FAIL  ") + "sqli-time 干净端点不误报（假阳性检测）");
+
+try { srv.kill(); } catch {}
+run("bypass403.mjs 矩阵可运行", process.execPath, [path.join(HUNT, "scripts", "bypass403.mjs"), "http://127.0.0.1:" + PORT, "/admin"], { timeout: 60000 });
+
+// ── 6. 插件接线（新会话自动生效的关键）
+section("6. 插件接线（systemPrompt 注入）");
+const policyPath = path.join(ROOT, "assets", "policy.md");
+const policyOk = fs.existsSync(policyPath) && fs.readFileSync(policyPath, "utf8").length > 300;
+results.push({ label: "assets/policy.md 存在且非空", ok: policyOk });
+console.log((policyOk ? "  PASS  " : "  FAIL  ") + "assets/policy.md 存在且非空" + (policyOk ? "  (" + fs.statSync(policyPath).size + " bytes)" : ""));
+
+const idxSrc = fs.readFileSync(path.join(ROOT, "lib", "index.js"), "utf8");
+const hasSection = idxSrc.includes("systemPrompt.section") && /inject\s*=\s*\[\s*["']systemPrompt["']\s*\]/.test(idxSrc);
+results.push({ label: "index.js 使用 systemPrompt.section 注入", ok: hasSection });
+console.log((hasSection ? "  PASS  " : "  FAIL  ") + "index.js 使用 systemPrompt.section 注入");
+
+const mod = await import("file://" + path.join(ROOT, "lib", "index.js").replace(/\\/g, "/"));
+const applyOk = typeof mod.apply === "function" && Array.isArray(mod.inject) && mod.inject.includes("systemPrompt");
+results.push({ label: "插件导出 apply + inject systemPrompt", ok: applyOk });
+console.log((applyOk ? "  PASS  " : "  FAIL  ") + "插件导出 apply + inject systemPrompt");
+
+let patchOk = false, patchInfo = "";
+try {
+  const jsYamlPath = path.join(process.env.DSH_HOME || path.join(process.env.USERPROFILE || "", ".dsh"), "profiles", "desktop", "node_modules", "js-yaml", "index.js");
+  const yaml = (await import("file://" + jsYamlPath.replace(/\\/g, "/"))).default;
+  const doc = yaml.load(fs.readFileSync(path.join(ROOT, "cordis.patch.yml"), "utf8"));
+  const entry = (doc.find(e => e.insert) || {}).insert?.[0];
+  patchOk = !!entry && entry.id === "dsh-hole" && entry.config?.injectPolicy === true;
+  patchInfo = entry ? entry.id + " inject=" + JSON.stringify(entry.inject) + " injectPolicy=" + entry.config?.injectPolicy : "no insert entry";
+} catch (e) { patchInfo = "yaml error: " + (e && e.message); }
+results.push({ label: "cordis.patch.yml 声明 dsh-hole 且 injectPolicy=true", ok: patchOk });
+console.log((patchOk ? "  PASS  " : "  FAIL  ") + "cordis.patch.yml 声明正确  →  " + patchInfo);
+
+// 装好的副本是否已含新代码（pnpm 安装的是 profiles/desktop/node_modules/dsh-hole）
+const installedIdx = path.join(process.env.USERPROFILE || "", ".dsh", "profiles", "desktop", "node_modules", "dsh-hole", "lib", "index.js");
+if (fs.existsSync(installedIdx)) {
+  const installedHas = fs.readFileSync(installedIdx, "utf8").includes("systemPrompt.section");
+  results.push({ label: "已安装副本包含注入逻辑", ok: installedHas });
+  console.log((installedHas ? "  PASS  " : "  WARN  ") + "已安装副本包含注入逻辑" + (installedHas ? "" : "  → 需重新安装插件并重启 DSH"));
+} else {
+  console.log("  SKIP  未检测到 pnpm 安装副本（仅本地技能模式）");
+}
 
 // ── 汇总
 const failed = results.filter(r => !r.ok);

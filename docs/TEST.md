@@ -1,5 +1,31 @@
 # 测试指引（安装后怎么验）
 
+
+## 零、装好即生效（v1.3.0+）
+
+插件在 `apply()` 里做了两件事：
+
+1. 把 `skills/hole` 同步到 `$DSH_HOME/skills/hole`（技能可用）；
+2. 通过 `systemPrompt.section()` 追加一段**常驻指令**（约 1.2KB），内容包括：先跑 guard 门禁、门禁不过就停、命令占位符由 target 注入、只证明存在、报告字段约束。
+
+因此**新会话不需要手动 `skill()` 加载**也会遵循门禁与流程；需要细节时再加载技能取分册。
+
+验证方式：
+
+```bash
+node scripts/selftest.mjs        # 第 6 组「插件接线」4 项
+```
+
+> 注意：系统提示注入在 DSH **启动时**注册，装完必须重启 DSH；仅重启会话不够。
+
+关闭自动注入（只想装技能）：
+```yaml
+- id: dsh-hole
+  config:
+    registerSkill: true
+    injectPolicy: false
+```
+
 ## 一、一条命令跑完（推荐）
 
 ```bash
@@ -11,14 +37,14 @@ node scripts/selftest.mjs
 
 ```
 ========================================================
-ALL PASS   35/35
+ALL PASS   43/43
 ```
 
 加 `--verbose` 看每一步的实际输出。失败时会打印退出码与前 8 行输出。
 
 **外部目标只有 `example.com`**（公共示例域），其余全部在系统临时目录里跑，不访问任何真实业务系统。
 
-## 二、35 项检查覆盖什么
+## 二、43 项检查覆盖什么
 
 | 组 | 项数 | 验证内容 |
 |---|---|---|
@@ -26,7 +52,7 @@ ALL PASS   35/35
 | 2 文件完整性 | 3 | 20 个必备文件齐全、frontmatter 合法、SKILL.md < 500 行 |
 | 3 guard 门禁 | 13 | 模板默认必失败、填字段后通过、host 越界被拒、`allow_dos` 被拒、env/render 占位符正确 |
 | 4 break 装配 | 8 | build 产出含 L1 的 prompt、inspect 可通过、log 落盘、**门禁不过时 build 退出码 2** |
-| 5 hunt 脚本 | 5 | probe 拿到 200+标题、jsendpoints 可提取、sqli-time 正确判定「无信号」（误报检测）、bypass403 可运行 |
+| 5 hunt 脚本 | 6 | probe 拿到 200+标题、jsendpoints 可提取、sqli-time 正确判定「无信号」（误报检测）、bypass403 可运行 |
 
 ## 三、手动三步验证（想看清每层行为时用）
 

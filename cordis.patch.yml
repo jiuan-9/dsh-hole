@@ -1,32 +1,17 @@
 # dsh-hole bundle patch
 #
-# 本插件只做一件事：把 skills/hole 安装到 $DSH_HOME/skills/hole，
-# 让 DSH 原生 skill-filesystem 自动发现技能（catalog 刷新后即可 skill 工具加载）。
-# 不修改系统提示词、不劫持工具、不需要任何服务依赖。
+# 插件做两件事（均在 lib/index.js 的 apply 里）：
+#   1) registerSkill  —— 启动时把 skills/hole 同步到 $DSH_HOME/skills/hole
+#   2) injectPolicy  —— 通过 systemPrompt.section() 追加常驻指令，新会话开局即遵循
+#
+# 注意：不覆盖宿主已有的 personaPrefix / personaSuffix（那会顶掉工作目录等既有段落）。
+# apply 内全部 try/catch，注入失败只 warn，不拖垮宿主。
 
 - insert:
     - id: dsh-hole
       name: 'dsh-hole'
-      inject: []
+      inject: [systemPrompt]
       config:
-        registerSkill: true   # 启动时同步技能到 $DSH_HOME/skills/hole
-        force: false          # true = 覆盖 $DSH_HOME 下已有的 hole（会先备份）
-
-# ── 可选：与 dsh-purge 组合 ────────────────────────────────────────────────
-# 若已安装 dsh-purge，可同时启用它的演练台（预设 + 事实库 + HTTP 桥）。
-# 未安装 dsh-purge 时以下条目请不要启用，否则宿主会因缺少包而报错。
-#
-#    - id: dsh-purge
-#      name: 'dsh-purge'
-#      inject: [systemPrompt, tools]
-#      config:
-#        enabled: true
-#        autoApplyOnStart: false
-#
-#    - id: dsh-purge-redteam
-#      name: dsh-purge/redteam
-#
-#    - id: dsh-purge-redteam-store
-#      name: dsh-purge/redteam/store
-#      config:
-#        root: !!js dshHomePath('redteam')
+        registerSkill: true   # 同步技能
+        injectPolicy: true    # 注入常驻指令（设 false 可关闭，仅保留技能安装）
+        force: false
