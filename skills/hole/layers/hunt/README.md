@@ -6,6 +6,7 @@
 
 | 分册 | 内容 | 何时读 |
 |---|---|---|
+| `references/00-research-basis.md` | OWASP Top10:2025 / WSTG / CWE Top25 / NIST 800-115 / ISO 29147 对照，及每条做法的出处 | 写报告引标准时 |
 | `references/01-recon.md` | 被动情报（CT 日志/历史 DNS/备案）、指纹判读、路径字典、JS 挖接口与 sourcemap | 开工第一步 |
 | `references/02-web-checklists.md` | 八大攻击面：认证 / 授权 / 注入 / 文件 / SSRF / 业务 / 前端 / 基础设施 | 主体作业 |
 | `references/03-framework-fingerprints.md` | ThinkPHP / Laravel / CI / Spring / Shiro / UEditor / 面板 | 指纹对上后 |

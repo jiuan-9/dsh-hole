@@ -48,7 +48,7 @@ node layers/break/adapter.mjs log --profile cn-model --task pentest --refusal 0
 
 ## 第 2 步：挖掘层
 
-读 `layers/hunt/README.md` 取分册索引与脚本清单。命令里的 `{{TARGET}}` 等占位符由 target.mjs env 注入。
+读 `layers/hunt/README.md` 取分册索引与脚本清单。方法论全部对标 **OWASP Top 10:2025 + WSTG 4.1-4.13 + CWE Top 25 (2025)**，出处见 `layers/hunt/references/00-research-basis.md`。命令里的 `{{TARGET}}` 等占位符由 target.mjs env 注入。
 
 ```bash
 node layers/hunt/scripts/probe.mjs hosts.txt hosts.json 15

@@ -1,5 +1,7 @@
 # 侦察分册（被动优先，主动克制）
 
+> 对应 **WSTG 4.1 Information Gathering**；情报采集的合法边界见 `../../guard/law-cn.md`。
+
 ## 一、被动情报（零接触，永远合法）
 
 ```bash
